@@ -1,0 +1,3 @@
+Mission_Route_Planner:
+  ros__parameters:
+    goal_pose: [5.0,2.0,3.0] #x, y, z 
