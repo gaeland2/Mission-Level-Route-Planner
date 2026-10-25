@@ -11,6 +11,9 @@
 
 <!-- ADDED -->
 <depend>rclcpp</depend>
+<depend>octomap</depend>
+<depend>octomap_msgs</depend>
+<depend>nav_msgs</depend>
 <!-- END ADDED -->
 
   <test_depend>ament_lint_auto</test_depend>

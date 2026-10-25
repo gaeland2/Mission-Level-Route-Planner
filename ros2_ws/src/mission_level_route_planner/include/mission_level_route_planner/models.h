@@ -20,6 +20,11 @@ enum class PlanStatus {
   NO_PATH
 };
 
+enum class ServiceStatus {
+  RETURN_SUCCESS,
+  RETURN_FAILURE
+};
+
 
 // A position in the map frame, in meters (East, north, up: x east, y north, z up).
 struct Waypoint {
