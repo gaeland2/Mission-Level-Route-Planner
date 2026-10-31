@@ -1,23 +1,68 @@
+#include "mission_level_route_planner/grid.h"
+
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
 using namespace std;
 
-namespace mission_level_route_planner // use the namespace so our code doesnt conflict with ROS2/Octomap/MAVROS
+namespace mission_level_route_planner
 {
 
-
-//full OccupancyGrid usage goes here
 OccupancyGrid::OccupancyGrid(int nx, int ny, int nz, double resolution, Waypoint origin)
 : nx_(nx), ny_(ny), nz_(nz), resolution_(resolution), origin_(origin),
   k_min_(0), k_max_(nz - 1),
-  blocked_(static_cast<size_t>(nx) * ny * nz, 0)
+  margin_m_(0.0), margin_offsets_{Index{0, 0, 0}},
+  occupied_(static_cast<size_t>(nx) * ny * nz, 0),
+  cover_(static_cast<size_t>(nx) * ny * nz, 0)
 {
 }
 
+void OccupancyGrid::set_safety_margin(double radius_m)
+{
+  if (radius_m < 0.0) {
+    throw invalid_argument("safety margin must not be negative");
+  }
+  // Every cell offset whose center is within radius_m of the obstacle cell's center.
+  const double eps = 1e-9;
+  const double reach_cells = floor(radius_m / resolution_ + eps);
+  // A sphere with a radius of more than 26 cells has more than 65535 cells, so reject it
+  // before looping over it.
+  if (reach_cells > 26.0) {
+    throw invalid_argument("safety margin is too large for this grid resolution");
+  }
+  const int reach = static_cast<int>(reach_cells);
+  vector<Index> offsets;
+  for (int di = -reach; di <= reach; ++di) {
+    for (int dj = -reach; dj <= reach; ++dj) {
+      for (int dk = -reach; dk <= reach; ++dk) {
+        const double d = resolution_ * sqrt(static_cast<double>(di * di + dj * dj + dk * dk));
+        if (d <= radius_m + eps) {offsets.push_back(Index{di, dj, dk});}
+      }
+    }
+  }
+  // cover_ counts are 16-bit, so a cell can be covered by at most 65535 obstacles.
+  if (offsets.size() > 65535) {
+    throw invalid_argument("safety margin is too large for this grid resolution");
+  }
+  margin_m_ = radius_m;
+  margin_offsets_ = move(offsets);
 
-//OccupancyGrid functions here
+  // Rebuild the cover counts from the real obstacles.
+  fill(cover_.begin(), cover_.end(), 0);
+  for (int id = 0; id < cell_count(); ++id) {
+    if (occupied_[id]) {apply_margin(from_id(id), +1);}
+  }
+}
+
+void OccupancyGrid::apply_margin(const Index & n, int delta)
+{
+  for (const Index & o : margin_offsets_) {
+    const Index m{n[0] + o[0], n[1] + o[1], n[2] + o[2]};
+    if (in_bounds(m)) {cover_[to_id(m)] += delta;}
+  }
+}
+
 void OccupancyGrid::set_altitude_limits(double min_z_m, double max_z_m)
 {
   if (min_z_m > max_z_m) {
@@ -32,8 +77,6 @@ void OccupancyGrid::set_altitude_limits(double min_z_m, double max_z_m)
   k_min_ = static_cast<int>(min(max(lo, 0.0), static_cast<double>(nz_)));
   k_max_ = static_cast<int>(max(min(hi, nz_ - 1.0), -1.0));
 }
-
-
 
 void OccupancyGrid::clear_altitude_limits()
 {
@@ -53,17 +96,26 @@ bool OccupancyGrid::in_bounds(const Index & n) const
 
 bool OccupancyGrid::is_free(const Index & n) const
 {
-  return in_bounds(n) && within_altitude_limits(n) && blocked_[to_id(n)] == 0;
+  return in_bounds(n) && within_altitude_limits(n) && cover_[to_id(n)] == 0;
+}
+
+bool OccupancyGrid::is_occupied(const Index & n) const
+{
+  return in_bounds(n) && occupied_[to_id(n)] != 0;
 }
 
 void OccupancyGrid::block(const Index & n)
 {
-  if (in_bounds(n)) {blocked_[to_id(n)] = 1;}
+  if (!in_bounds(n) || occupied_[to_id(n)]) {return;}
+  occupied_[to_id(n)] = 1;
+  apply_margin(n, +1);
 }
 
 void OccupancyGrid::unblock(const Index & n)
 {
-  if (in_bounds(n)) {blocked_[to_id(n)] = 0;}
+  if (!in_bounds(n) || !occupied_[to_id(n)]) {return;}
+  occupied_[to_id(n)] = 0;
+  apply_margin(n, -1);
 }
 
 vector<Index> OccupancyGrid::neighbors(const Index & n, int connectivity) const
@@ -117,7 +169,4 @@ Index OccupancyGrid::to_index(const Waypoint & p) const
     static_cast<int>(floor((p.z - origin_.z) / resolution_))};
 }
 
-
-
-
-} // end of namespace
+}  // namespace mission_level_route_planner
