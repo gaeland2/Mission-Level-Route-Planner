@@ -26,7 +26,9 @@ ament_target_dependencies(mission_level_route_planner_node rclcpp)
 
 
 # FOR OCTOMAP CLIENT
-add_executable(octomap_client src/OctomapClient.cpp)
+add_executable(octomap_client 
+              src/OctomapClient.cpp
+              src/grid.cpp)
 ament_target_dependencies(octomap_client rclcpp octomap_msgs octomap)
 target_include_directories(octomap_client PRIVATE ${OCTOMAP_INCLUDE_DIRS} include)
 target_link_libraries(octomap_client ${OCTOMAP_LIBRARIES})
