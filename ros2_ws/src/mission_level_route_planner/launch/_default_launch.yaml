@@ -1,0 +1,10 @@
+%YAML 1.2
+---
+launch:
+  - node:
+      pkg: "mission_level_route_planner"
+      exec: "mission_level_route_planner_node" #name of exec in CMAKE
+      name: "Mission_Route_Planner"
+      output: "screen"
+      param:
+        - from: "$(find-pkg-share mission_level_route_planner)/config/params.yaml"

@@ -5,21 +5,42 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
+## ADDED -------------------------------------------------Build dependencies here IMPORTANTTTT->>>
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(octomap REQUIRED)
+find_package(octomap_msgs REQUIRED)
+
+#include_directories(${OCTOMAP_INCLUDE_DIRS})
+#link_libraries(${OCTOMAP_LIBRARIES})
+
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(mission_level_route_planner_node src/mission_level_route_planner_node.cpp 
-              src/metrics.cpp src/grid.cpp)
+#FOR MISSION LEVEL ROUTE PLANNER NODE
+add_executable(mission_level_route_planner_node src/mission_level_route_planner_node.cpp)
+ament_target_dependencies(mission_level_route_planner_node rclcpp)
+
+
+# FOR OCTOMAP CLIENT
+add_executable(octomap_client src/OctomapClient.cpp)
+ament_target_dependencies(octomap_client rclcpp octomap_msgs octomap)
+target_include_directories(octomap_client PRIVATE ${OCTOMAP_INCLUDE_DIRS} include)
+target_link_libraries(octomap_client ${OCTOMAP_LIBRARIES})
+
+# FOR METRICS FUNCTIONS
+target_sources(mission_level_route_planner_node PRIVATE src/metrics.cpp src/grid.cpp)
+
 target_include_directories(mission_level_route_planner_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(mission_level_route_planner_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS mission_level_route_planner_node
-  DESTINATION lib/${PROJECT_NAME})
+## --------------------------------------------------------
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -32,5 +53,23 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+
+## LAUNCH FILES
+install(DIRECTORY
+    launch
+    DESTINATION share/${PROJECT_NAME}/
+  )
+install(DIRECTORY
+    config
+    DESTINATION share/${PROJECT_NAME}/
+  )
+install(TARGETS mission_level_route_planner_node
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS octomap_client
+  DESTINATION lib/${PROJECT_NAME})
+##0-
+
 
 ament_package()
