@@ -11,7 +11,8 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(mission_level_route_planner_node src/mission_level_route_planner_node.cpp)
+add_executable(mission_level_route_planner_node src/mission_level_route_planner_node.cpp 
+              src/metrics.cpp src/grid.cpp)
 target_include_directories(mission_level_route_planner_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
