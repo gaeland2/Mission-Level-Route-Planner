@@ -6,11 +6,12 @@
 #include "rclcpp/rclcpp.hpp"
 #include <octomap_msgs/conversions.h>
 #include <memory.h>
+#include "mission_level_route_planner/grid.h"
 
 using namespace std;
 using namespace std::chrono_literals;
 using namespace octomap;
-
+using namespace mission_level_route_planner;
 
 //Class to request Octree from running octomap_server.  
 class OctomapClient : public rclcpp::Node
@@ -41,6 +42,46 @@ class OctomapClient : public rclcpp::Node
     bool isOccupied = n && tree_->isNodeOccupied(n);
     return isOccupied;
   }
+
+  //Converts given octree requested from client to an occupancy grid used for
+  //pathfinding, based on origin or start goal
+  OccupancyGrid getOccupancyGrid(Waypoint origin)
+  {
+    shared_ptr<octomap::OcTree> tree = this->tree_;
+    
+    double min_x, min_y, min_z, max_x, max_y, max_z;
+    tree->getMetricMin(min_x, min_y, min_z);
+    tree->getMetricMax(max_x, max_y, max_z);
+
+    const double res = tree->getResolution();
+    const int nx = static_cast<int>(std::ceil((max_x - min_x) / res));
+    const int ny = static_cast<int>(std::ceil((max_y - min_y) / res));
+    const int nz = static_cast<int>(std::ceil((max_z - min_z) / res));
+
+    OccupancyGrid grid = OccupancyGrid(nx, ny, nz, res, origin);
+
+    //being filling occupancy grid
+    for(auto it = tree->begin_leafs(), end = tree->end_leafs(); it !=end; ++it)
+    {
+      if (!tree->isNodeOccupied(*it)) continue;
+
+      const double half = it.getSize() / 2.0;
+        const int i0 = (int)std::floor((it.getX() - half - min_x) / res + 1e-6);
+        const int i1 = (int)std::floor((it.getX() + half - min_x) / res - 1e-6);
+        const int j0 = (int)std::floor((it.getY() - half - min_y) / res + 1e-6);
+        const int j1 = (int)std::floor((it.getY() + half - min_y) / res - 1e-6);
+        const int k0 = (int)std::floor((it.getZ() - half - min_z) / res + 1e-6);
+        const int k1 = (int)std::floor((it.getZ() + half - min_z) / res + 1e-6);
+
+     for (int i = i0; i <= i1; ++i)
+      for (int j = j0; j <= j1; ++j)
+        for (int k = k0; k <= k1; ++k)
+          grid.block(Index{i, j, k});
+    }
+    return grid;
+  }
+
+  //converts given octree called from server
 
   private:
     rclcpp::Client<octomap_msgs::srv::GetOctomap>::SharedPtr _client;
