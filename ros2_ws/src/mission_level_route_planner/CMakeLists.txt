@@ -20,7 +20,7 @@ find_package(octomap_msgs REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-#FOR MISSION LEVEL ROUITE PLANNER NODE
+#FOR MISSION LEVEL ROUTE PLANNER NODE
 add_executable(mission_level_route_planner_node src/mission_level_route_planner_node.cpp)
 ament_target_dependencies(mission_level_route_planner_node rclcpp)
 
@@ -31,6 +31,8 @@ ament_target_dependencies(octomap_client rclcpp octomap_msgs octomap)
 target_include_directories(octomap_client PRIVATE ${OCTOMAP_INCLUDE_DIRS} include)
 target_link_libraries(octomap_client ${OCTOMAP_LIBRARIES})
 
+# FOR METRICS FUNCTIONS
+target_sources(mission_level_route_planner_node PRIVATE src/metrics.cpp src/grid.cpp)
 
 target_include_directories(mission_level_route_planner_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
