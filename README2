@@ -1,0 +1,37 @@
+NOTE: This is for demo purposes only. This demo uses a few .h files and .cpp files before extra commits were made to them. Feel free to integrate whatever for the actual main branch though.
+
+
+How to build:
+
+cd ~/Mission-Level-Route-Planner/ros2_ws
+source /opt/ros/humble/setup.bash
+colcon build --packages-select mission_level_route_planner
+source install/setup.bash
+
+
+How to test:
+
+colcon test --packages-select mission_level_route_planner --event-handlers console_direct+
+colcon test-result --verbose
+
+You should see 3 test programs pass: test_dijkstra (14 tests), test_altitude_limits (9) and test_safety_margin (16), 39 in total.
+
+
+
+
+
+EXTRA EXTRA EXTRA EXTRA EXTRA EXTRA
+
+To run only the safety margin tests, run the test program directly (the path is usually right):
+
+./build/mission_level_route_planner/test_safety_margin
+
+(Add --gtest_filter=SafetyMargin.PathKeeps* to run just one test.)
+
+To see the margin work:
+
+optionally add this line to src/planner_demo.cpp, right before the Context ctx(...) line:
+
+grid->set_safety_margin(1.5);
+
+Rebuild and run it with ros2 run mission_level_route_planner planner_demo.
