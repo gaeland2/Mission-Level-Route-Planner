@@ -31,7 +31,9 @@ namespace mission_level_route_planner{
             return this->plan.status;
         }
 
-        //returns a list of waypoints that returns the shortest path to destinatin obstacle free
+        //returns a list of Index that returns the shortest path to destinatin obstacle free,
+        //Note this is the unconverted list of waypoints, must use to_waypoints() for Ros compatable
+        //waypoitns
         vector<Index> getAStarPath(const Index & start, const Index & goal,
                                         int connectivity = 26)
         {
@@ -104,11 +106,22 @@ namespace mission_level_route_planner{
            plan.status = PlanStatus::NO_PATH;
         }
 
+    //returns a vector of waypoints to be pushed into mavros msgs 
+    std::vector<Waypoint> to_waypoints(const std::vector<Index> & path) const
+    {
+    std::vector<Waypoint> out;
+    out.reserve(path.size());
+    for (const Index & i : path) {out.push_back(grid.to_world(i));}
+    return out;
+    }
+
         
 
     private:
         OccupancyGrid grid;
         PlanResult plan; 
+        //Gets the euclidian distance between three points 
+    };  // namespace mission_level_route_planner
 
-}
+
 }
