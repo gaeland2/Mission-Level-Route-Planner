@@ -1,18 +1,19 @@
-//3D occupancy grid (header). OctomapAdapter should build off of this from the .bt file
-
+// A 3D occupancy grid. Later, OctomapAdapter will build one of these from the .bt map.
 #pragma once
 
 #include <cstdint>
 #include <vector>
 
-#include "mission_level_route_planner/models.h" //use some parts from models header
+#include "mission_level_route_planner/models.h"
 
 using namespace std;
 
-namespace mission_level_route_planner {
+namespace mission_level_route_planner
+{
 
-// cells should be free unless blocked, and occupied cells should be impassable
-class OccupancyGrid {
+// Cells are free unless blocked. Occupied cells are impassable, never just costly.
+class OccupancyGrid
+{
 public:
   OccupancyGrid(
     int nx, int ny, int nz, double resolution = 1.0,
@@ -75,4 +76,3 @@ private:
 };
 
 }  // namespace mission_level_route_planner
-

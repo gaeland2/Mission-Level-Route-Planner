@@ -1,5 +1,4 @@
-// Plain data types that will be used by the whole planner. i dont think ROS is needed here. Add whatever else data types you guys need here
-
+// Plain data types shared by the whole planner. No ROS includes here.
 #pragma once
 
 #include <array>
@@ -7,12 +6,14 @@
 
 using namespace std;
 
-namespace mission_level_route_planner {
+namespace mission_level_route_planner
+{
 
-// grid cell of index {i, j, k}, the planner will work in index space and the grid converts it to meters
+// A grid cell index {i, j, k}. Planners work in index space; the grid converts to meters.
 using Index = array<int, 3>;
 
-enum class PlanStatus {
+enum class PlanStatus
+{
   OK,
   START_BLOCKED,
   GOAL_BLOCKED,
@@ -20,20 +21,16 @@ enum class PlanStatus {
   NO_PATH
 };
 
-enum class ServiceStatus {
-  RETURN_SUCCESS,
-  RETURN_FAILURE
-};
-
-
-// A position in the map frame, in meters (East, north, up: x east, y north, z up).
-struct Waypoint {
+// A position in the map frame, in meters (ENU: x east, y north, z up).
+struct Waypoint
+{
   double x{0.0};
   double y{0.0};
   double z{0.0};
 };
 
-struct PlanResult {
+struct PlanResult
+{
   PlanStatus status{PlanStatus::NO_PATH};
   vector<Index> path;
   double length_m{0.0};
@@ -43,6 +40,4 @@ struct PlanResult {
   bool success() const {return status == PlanStatus::OK;}
 };
 
-
-
-} // end namespace
+}  // namespace mission_level_route_planner
