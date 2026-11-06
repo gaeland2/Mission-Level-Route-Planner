@@ -52,7 +52,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       this->set_parameters(all_new_parameters);
     }
     
-    std::vector<double> getGoalPose(){
+    std::vector<double> getStartPose(){
       return this->start_pose;
     }
 
