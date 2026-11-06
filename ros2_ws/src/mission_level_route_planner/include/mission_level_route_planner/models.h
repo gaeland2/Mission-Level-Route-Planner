@@ -3,6 +3,7 @@
 
 #include <array>
 #include <vector>
+#include <stdexcept>
 
 using namespace std;
 
@@ -28,6 +29,8 @@ struct Waypoint
   double y{0.0};
   double z{0.0};
 };
+
+
 
 struct PlanResult
 {

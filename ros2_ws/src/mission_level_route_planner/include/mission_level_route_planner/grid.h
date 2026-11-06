@@ -15,9 +15,12 @@ namespace mission_level_route_planner
 class OccupancyGrid
 {
 public:
+
   OccupancyGrid(
     int nx, int ny, int nz, double resolution = 1.0,
     Waypoint origin = Waypoint{});
+
+
 
   bool in_bounds(const Index & n) const;
   // Free means: inside the map, inside the altitude limits, and not covered by an obstacle or

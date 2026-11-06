@@ -12,7 +12,6 @@
   <depend>octomap</depend>
   <depend>octomap_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>mavros_msgs</depend>
 
   <!-- Add rclcpp, geometry_msgs, nav_msgs, octomap_msgs, octomap, mavros_msgs here once the ROS layer exists. -->
 
