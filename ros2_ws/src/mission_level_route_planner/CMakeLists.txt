@@ -8,6 +8,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(ament_cmake REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(mavros_msgs REQUIRED)
+find_package(octomap_msgs REQUIRED)
+find_package(octomap REQUIRED)
+
 # Add rclcpp, geometry_msgs, nav_msgs, octomap_msgs, octomap, mavros_msgs here once the ROS layer exists.
 
 # Core planner library: no ROS dependencies, so it is easy to unit test.
@@ -24,7 +29,7 @@ target_link_libraries(planner_demo route_planner_core)
 
 install(DIRECTORY include/ DESTINATION include)
 install(TARGETS route_planner_core
-  EXPORT export_${PROJECT_NAME}
+  EXPORT      export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
