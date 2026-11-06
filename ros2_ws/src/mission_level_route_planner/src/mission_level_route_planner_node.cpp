@@ -57,7 +57,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
     }
 
 
-    OccupancyGrid getOccupancyGrid(Waypoint origin, std::shared_ptr<octomap::OcTree> _octree)
+    std::shared_ptr<OccupancyGrid> getOccupancyGrid(Waypoint origin, std::shared_ptr<octomap::OcTree> _octree)
     {
       shared_ptr<octomap::OcTree> tree = _octree;
       
@@ -70,7 +70,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       const int ny = static_cast<int>(std::ceil((max_y - min_y) / res));
       const int nz = static_cast<int>(std::ceil((max_z - min_z) / res));
 
-      OccupancyGrid grid = OccupancyGrid(nx, ny, nz, res, origin);
+      auto grid = std::make_shared<OccupancyGrid>(nx, ny, nz, res, origin);
 
       //being filling occupancy grid
       for(auto it = tree->begin_leafs(), end = tree->end_leafs(); it !=end; ++it)
@@ -88,7 +88,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       for (int i = i0; i <= i1; ++i)
         for (int j = j0; j <= j1; ++j)
           for (int k = k0; k <= k1; ++k)
-            grid.block(Index{i, j, k});
+            grid->block(Index{i, j, k});
       }
       return grid;
     }
@@ -110,7 +110,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
       std::mutex _octreeMutex;
 
       //OccupancyGrid, PathResult, etc
-      std::optional<OccupancyGrid> grid; //<optional> meaning grid can be null at start if octomap is not called 
+      std::shared_ptr<OccupancyGrid> grid;
+      //<optional> meaning grid can be null at start if octomap is not available
 
       
     void octomapCallback(
@@ -139,7 +140,16 @@ class MissionRoutePlannerNode : public rclcpp::Node
         _octree.reset(tree);   // takes ownership, frees the previous tree
 
         //BUILDS GRID HERE.
-        this->getOccupancyGrid(Waypoint{start_pose[0], start_pose[1], start_pose[2]}, _octree);
+        grid = this->getOccupancyGrid(Waypoint{start_pose[0], start_pose[1], start_pose[2]}, _octree);
+        if(!grid)
+        {
+           RCLCPP_WARN(get_logger(), "grid is not built");
+        }
+        else
+        {
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "OccupancyGrid is built, pointed by grid variable.");
+        }
+
 
     }
   };
