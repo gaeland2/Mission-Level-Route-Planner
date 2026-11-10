@@ -20,7 +20,22 @@ enum class PlanStatus
   GOAL_BLOCKED,
   OUT_OF_BOUNDS,
   NO_PATH
+  NO_MAP
 };
+
+// turn PlanStatus into text for log messages
+inline const char * to_string(PlanStatus s)
+{
+  switch (s) {
+    case PlanStatus::OK: return "OK";
+    case PlanStatus::START_BLOCKED: return "START_BLOCKED";
+    case PlanStatus::GOAL_BLOCKED: return "GOAL_BLOCKED";
+    case PlanStatus::OUT_OF_BOUNDS: return "OUT_OF_BOUNDS";
+    case PlanStatus::NO_PATH: return "NO_PATH";
+    case PlanStatus::NO_MAP: return "NO_MAP";
+  }
+  return "UNKNOWN";
+}
 
 // A position in the map frame, in meters (ENU: x east, y north, z up).
 struct Waypoint
