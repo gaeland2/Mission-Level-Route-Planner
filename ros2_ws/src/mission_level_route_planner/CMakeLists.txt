@@ -12,6 +12,7 @@ find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(octomap_msgs REQUIRED)
 find_package(octomap REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # Add rclcpp, geometry_msgs, nav_msgs, octomap_msgs, octomap, mavros_msgs here once the ROS layer exists.
 
@@ -32,7 +33,7 @@ find_package(rclcpp REQUIRED)
 add_executable(mission_route_planner_node src/mission_level_route_planner_node.cpp)
 target_link_libraries(mission_route_planner_node route_planner_core)
 ament_target_dependencies(mission_route_planner_node
-  rclcpp octomap_msgs octomap nav_msgs)
+  rclcpp octomap_msgs octomap nav_msgs geometry_msgs)
 target_link_libraries(mission_route_planner_node ${OCTOMAP_LIBRARIES})
 
 install(TARGETS mission_route_planner_node
