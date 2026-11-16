@@ -1,4 +1,4 @@
-#include "mission_level_route_planner/mission_planner.h"
+#include "mission_planner.h"
 
 #include <cmath>
 #include <stdexcept>
