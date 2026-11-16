@@ -19,8 +19,8 @@ enum class PlanStatus
   START_BLOCKED,
   GOAL_BLOCKED,
   OUT_OF_BOUNDS,
-  NO_PATH
-  NO_MAP
+  NO_PATH,
+  NO_MAP,
 };
 
 // turn PlanStatus into text for log messages
