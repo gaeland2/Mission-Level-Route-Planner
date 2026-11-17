@@ -10,6 +10,7 @@ using namespace std;
 namespace mission_level_route_planner
 {
 
+struct PlanRequest
 {
   Waypoint start;
   Waypoint goal;
@@ -18,6 +19,9 @@ namespace mission_level_route_planner
 class MissionPlanner
 {
 public:
+
+  explicit MissionPlanner(shared_ptr<OccupancyGrid> grid);
+
   // Accept a map. Throws invalid_argument if grid is null
   void set_map(shared_ptr<OccupancyGrid> grid);
   
@@ -31,6 +35,10 @@ public:
   {
     return validate(request.start, request.goal);
   }
+
+  
+// Check both start & goal poses against the map and return a corresponding PlanStatus
+  vector<Waypoint> getMissionPath(const PlanRequest & request) const;
 
 private:
   // The accepted map (null until set_map() is called)
