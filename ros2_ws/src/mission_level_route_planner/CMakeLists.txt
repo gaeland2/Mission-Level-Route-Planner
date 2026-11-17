@@ -19,15 +19,14 @@ find_package(octomap REQUIRED)
 add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
-  src/context.cpp)
+  src/context.cpp
+  src/metrics.cpp)
 target_include_directories(route_planner_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 add_executable(planner_demo src/planner_demo.cpp)
 target_link_libraries(planner_demo route_planner_core)
-
-find_package(rclcpp REQUIRED)
 
 add_executable(mission_route_planner_node src/mission_level_route_planner_node.cpp)
 target_link_libraries(mission_route_planner_node route_planner_core)
@@ -45,6 +44,8 @@ install(TARGETS route_planner_core
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 install(TARGETS planner_demo DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY config launch
+  DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
