@@ -163,10 +163,12 @@ Waypoint OccupancyGrid::to_world(const Index & n) const
 
 Index OccupancyGrid::to_index(const Waypoint & p) const
 {
-  return Index{
-    static_cast<int>(floor((p.x - origin_.x) / resolution_)),
-    static_cast<int>(floor((p.y - origin_.y) / resolution_)),
-    static_cast<int>(floor((p.z - origin_.z) / resolution_))};
+  const auto cell = [this](double v, double o) {
+      const double c = floor((v - o) / resolution_);
+      if (!isfinite(c)) {return numeric_limits<int>::min();}
+      return static_cast<int>(max(-1e9, min(1e9, c)));
+    };
+  return Index{cell(p.x, origin_.x), cell(p.y, origin_.y), cell(p.z, origin_.z)};
 }
 
 }  // namespace mission_level_route_planner
