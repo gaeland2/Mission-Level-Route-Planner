@@ -20,7 +20,9 @@ add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
   src/context.cpp
-  src/metrics.cpp)
+  src/metrics.cpp
+  src/mission_planner.cpp)
+
 target_include_directories(route_planner_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -57,6 +59,9 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_safety_margin test/test_safety_margin.cpp)
   target_link_libraries(test_safety_margin route_planner_core)
+
+  ament_add_gtest(test_mission_planner test/test_mission_planner.cpp)
+  target_link_libraries(test_mission_planner route_planner_core)
 endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
