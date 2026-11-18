@@ -20,7 +20,8 @@ find_package(geometry_msgs REQUIRED)
 add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
-  src/context.cpp)
+  src/context.cpp
+  src.mission_planner.cpp)
 target_include_directories(route_planner_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -28,7 +29,6 @@ target_include_directories(route_planner_core PUBLIC
 add_executable(planner_demo src/planner_demo.cpp)
 target_link_libraries(planner_demo route_planner_core)
 
-find_package(rclcpp REQUIRED)
 
 add_executable(mission_route_planner_node src/mission_level_route_planner_node.cpp)
 target_link_libraries(mission_route_planner_node route_planner_core)
@@ -51,6 +51,9 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_dijkstra test/test_dijkstra.cpp)
   target_link_libraries(test_dijkstra route_planner_core)
+
+  ament_add_gtest(test_mission_planner test/test_mission_planner.cpp)
+  target_link_libraries(test_mission_planner route_planner_core)
 
   ament_add_gtest(test_altitude_limits test/test_altitude_limits.cpp)
   target_link_libraries(test_altitude_limits route_planner_core)
