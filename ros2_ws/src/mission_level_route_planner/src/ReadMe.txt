@@ -1,4 +1,17 @@
 How to use:
+Testing Pathfinder
+
+Update grid.cpp or create occupancy grid
+
+
+
+
+
+
+
+
+
+To solo Test Dijkstras:
 Only edit values in main
 Edit numbers in vector<vector<pair<double,double>>> a to change values:
     Add an addtional vector into the main vector = adds a new node
