@@ -21,7 +21,7 @@ add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
   src/context.cpp
-  src.mission_planner.cpp)
+  src/mission_planner.cpp)
 target_include_directories(route_planner_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
