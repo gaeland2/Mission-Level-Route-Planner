@@ -10,11 +10,6 @@ using namespace std;
 namespace mission_level_route_planner
 {
 
-struct PlanRequest
-{
-  Waypoint start;
-  Waypoint goal;
-};
 
 class MissionPlanner
 {
@@ -33,7 +28,7 @@ public:
   // Same check, just taking a PlanRequest instead
   PlanStatus validate(const PlanRequest & request) const
   {
-    return validate(request.start, request.goal);
+    return validate(request.startPose, request.endPose);
   }
 
   
