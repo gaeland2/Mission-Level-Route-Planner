@@ -14,6 +14,7 @@ namespace mission_level_route_planner
 class MissionPlanner
 {
 public:
+  MissionPlanner() = default;   // starts with no map (test_mission_planner.cpp was throwing crazy errors)
 
   explicit MissionPlanner(shared_ptr<OccupancyGrid> grid);
 
