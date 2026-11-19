@@ -1,9 +1,9 @@
 How to use:
-Testing Pathfinder
+Testing Pathfinder (currently not working)
 
 Update grid.cpp or create occupancy grid
 
-
+Currently not working
 
 
 
@@ -19,8 +19,9 @@ Edit numbers in vector<vector<pair<double,double>>> a to change values:
     first value in pair = node that edge connects to (that is not smaller vector number)
     second value in pair = edge weight
 Edit fucntion vector<double> b = dijkstra(a,0,4), first number is start and final number is destination
+Edit the test variables estimates for the heretical hook (might need to be double checked though)
 
 Once done and saved, complie using
-    g++ dijkstra.cpp
+    g++ Dijkstras.cpp
 
 then run exe file for output
