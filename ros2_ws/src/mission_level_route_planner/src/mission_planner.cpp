@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <utility>
-#include "dijkstra.h"
+#include "mission_level_route_planner/dijkstra.h"
 
 using namespace std;
 
