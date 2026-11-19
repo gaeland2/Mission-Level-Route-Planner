@@ -36,6 +36,8 @@ void MissionPlanner::set_map(shared_ptr<OccupancyGrid> grid)
 // ie. PlanRequest req;
 // req.start = (must convert our vector of doubles to waypoint structure)
 // req.end = (like above)
+
+/*
 vector<Waypoint> MissionPlanner::getMissionPath(const PlanRequest & request) const 
 {
     if (!grid_) {throw invalid_argument("map must not be null");}
@@ -61,6 +63,31 @@ vector<Waypoint> MissionPlanner::getMissionPath(const PlanRequest & request) con
     }
 
     return wp; 
+}
+
+
+this is the old vector<Waypoint>, feel free to delete the block comment if the old one is needed
+*/ 
+
+vector<Waypoint> MissionPlanner::getMissionPath(const PlanRequest & request) const
+{
+  if (!grid_) {throw invalid_argument("map must not be null");}
+
+  if (validate(request) != PlanStatus::OK) {return {};}
+
+  const Index startIndex = grid_->to_index(request.startPose);
+  const Index endIndex = grid_->to_index(request.endPose);
+
+  Dijkstra djk(grid_);
+  const PlanResult result = djk.execute_pathfinding(startIndex, endIndex);
+  if (!result.success()) {return {};}
+
+  vector<Waypoint> wp;
+  wp.reserve(result.path.size());
+  for (const Index & index : result.path) {
+    wp.push_back(grid_->to_world(index));
+  }
+  return wp;
 }
 
 PlanStatus MissionPlanner::validate(const Waypoint & start, const Waypoint & goal) const
