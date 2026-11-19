@@ -10,6 +10,7 @@ using namespace std;
 #define Dijkstras
 
 
-vector<double> dijkstra(vector<vector<pair<double,double>>>& adj, double src, double dest);
+vector<double> dijkstra(vector<vector<pair<double,double>>>& adj, double src, double dest, function<double(int)> heuristic = [](int node) {return 0.0;});
+
 
 #endif
