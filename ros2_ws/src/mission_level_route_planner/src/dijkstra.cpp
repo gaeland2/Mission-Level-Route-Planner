@@ -13,8 +13,8 @@ using namespace std;
 namespace mission_level_route_planner
 {
 
-Dijkstra::Dijkstra(shared_ptr<OccupancyGrid> grid, int connectivity)
-: grid_(move(grid)), connectivity_(connectivity)
+Dijkstra::Dijkstra(shared_ptr<OccupancyGrid> grid, int connectivity, int max_iterations, double timeout_seconds)
+: grid_(move(grid)), connectivity_(connectivity), max_iterations_(max_iterations), timeout_seconds_(timeout_seconds)
 {
 }
 
@@ -41,9 +41,25 @@ PlanResult Dijkstra::execute_pathfinding(const Index & start, const Index & goal
 
   PlanResult result;
   while (!open.empty()) {
+
+    // Stop searching if the time limit has been reached.
+    if (elapsed() >= timeout_seconds_) {
+      result.status = PlanStatus::TIMEOUT;
+      result.compute_time_s = elapsed();
+      return result;
+    }
+
     const auto [d, id] = open.top();
     open.pop();
+
     if (done[id]) {continue;}  // stale queue entry
+    // Stop searching if the iteration limit has been reached.
+    if (result.nodes_expanded >= max_iterations_) {
+      result.status = PlanStatus::MAX_ITERATIONS_REACHED;
+      result.compute_time_s = elapsed();
+      return result;
+    }
+
     done[id] = 1;
     ++result.nodes_expanded;
 

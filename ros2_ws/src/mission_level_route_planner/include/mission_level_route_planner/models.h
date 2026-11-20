@@ -19,7 +19,9 @@ enum class PlanStatus
   START_BLOCKED,
   GOAL_BLOCKED,
   OUT_OF_BOUNDS,
-  NO_PATH
+  NO_PATH,
+  TIMEOUT,
+  MAX_ITERATIONS_REACHED
 };
 
 // A position in the map frame, in meters (ENU: x east, y north, z up).
