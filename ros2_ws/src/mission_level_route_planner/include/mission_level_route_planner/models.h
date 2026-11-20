@@ -47,6 +47,11 @@ struct Waypoint
   double z{0.0};
 };
 
+struct PlanRequest
+{
+  Waypoint startPose;
+  Waypoint endPose;
+};
 
 
 struct PlanResult

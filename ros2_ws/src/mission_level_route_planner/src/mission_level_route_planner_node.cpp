@@ -12,6 +12,10 @@
 #include "mission_level_route_planner/grid.h"
 #include <optional>
 
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/point.hpp>
+
 
 using namespace std::chrono_literals;
 using namespace mission_level_route_planner;
@@ -22,6 +26,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
     MissionRoutePlannerNode()
     : Node("Mission_Route_Planner")
     {
+
+      //declare octomap parameter
       _octomapSubscription = this->create_subscription<octomap_msgs::msg::Octomap>(
           "/octomap_binary",
           rclcpp::QoS(10),
@@ -33,7 +39,19 @@ class MissionRoutePlannerNode : public rclcpp::Node
       ("start_pose", std::vector<double>{0.0, 0.0, 0.0});
       start_pose= this->get_parameter("start_pose").as_double_array();
       //
+
+      //Declare rviz listener
+      _initialPoseSubscription = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "/initialpose", 10,
+      std::bind(&MissionRoutePlannerNode::initialPoseCallback, this, std::placeholders::_1));
+
+      _goalPoseSubscription = create_subscription<geometry_msgs::msg::PoseStamped>(
+      "/goal_pose", 10,
+      std::bind(&MissionRoutePlannerNode::goalPoseCallback, this, std::placeholders::_1));
+
+
       
+
       timer_ = this->create_wall_timer(
       1000ms, std::bind(&MissionRoutePlannerNode::timer_callback, this));
       
@@ -99,10 +117,13 @@ class MissionRoutePlannerNode : public rclcpp::Node
 
       // Callbacks/subscriptions/clients/etc
       rclcpp::Subscription<octomap_msgs::msg::Octomap>::SharedPtr _octomapSubscription;
-      rclcpp::Client<octomap_msgs::srv::GetOctomap>::SharedPtr _client;
+
+      rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr _initialPoseSubscription;
+      rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr _goalPoseSubscription;
 
       /// Paramater variables, i.e goal_pose, start pose
       std::vector<double> start_pose; 
+      std::vector<double> goal_pose; 
       rclcpp::TimerBase::SharedPtr timer_;
 
       //Octree variables
@@ -113,7 +134,45 @@ class MissionRoutePlannerNode : public rclcpp::Node
       std::shared_ptr<OccupancyGrid> grid;
       //<optional> meaning grid can be null at start if octomap is not available
 
-      
+
+    void initialPoseCallback(
+      const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+      {
+        const auto & p = msg->pose.pose.position;
+        //const auto & q = msg->pose.pose.orientation;
+
+        start_pose = {p.x, p.y, p.z};
+        RCLCPP_INFO(
+          rclcpp::get_logger("rclcpp"),
+          "initial pose (subscribed from rviz): %.2f %.2f %.2f set",
+          p.x, p.y, p.z);
+
+        //rebuilds the occupancy grid
+        grid = this->getOccupancyGrid(Waypoint{start_pose[0], start_pose[1], start_pose[2]}, _octree);
+
+        if(!grid)
+        {
+           RCLCPP_WARN(get_logger(), "grid is not built after initialising start_pose");
+        }
+        else
+        {
+          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "OccupancyGrid is built, pointed by grid variable with initial pose.");
+        }
+      }
+
+    void goalPoseCallback(
+      const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+      {
+        const auto & p = msg->pose.position; //pos
+        //const auto & q = msg->pose.orientation; //orientaiton
+
+        goal_pose = {p.x, p.y, p.z};
+        RCLCPP_INFO(
+          rclcpp::get_logger("rclcpp"),
+          "goal pose (subscribed from rviz): %.2f %.2f %.2f set",
+          p.x, p.y, p.z);
+      }
+
     void octomapCallback(
         const octomap_msgs::msg::Octomap::SharedPtr msg)
     {
