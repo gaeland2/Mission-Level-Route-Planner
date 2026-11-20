@@ -33,6 +33,17 @@ void MissionPlanner::set_map(shared_ptr<OccupancyGrid> grid)
   grid_ = move(grid);
 }
 
+// kevin's stuff
+bool MissionPlanner::has_map() const
+{
+  return grid_ != nullptr;
+}
+// kevin's stuff
+shared_ptr<OccupancyGrid> MissionPlanner::map() const
+{
+  return grid_;
+}
+
 
 //Gets a list of waypoints to push to mavros
 // Create a plan request struct by inputting the start coordinates and goal coordinates
@@ -63,8 +74,12 @@ vector<Waypoint> MissionPlanner::getMissionPath(const PlanRequest & request) con
 
 PlanStatus MissionPlanner::validate(const Waypoint & start, const Waypoint & goal) const
 {
-  if (!grid_) {return PlanStatus::NO_MAP;}
-  if (!is_finite(start) || !is_finite(goal)) {return PlanStatus::OUT_OF_BOUNDS;}
+  if (!grid_) {
+    return PlanStatus::NO_MAP;
+  }
+  if (!is_finite(start) || !is_finite(goal)) {
+    return PlanStatus::INVALID_POSE;
+  }
 
   const Index s = grid_->to_index(start);
   const Index g = grid_->to_index(goal);
@@ -75,4 +90,4 @@ PlanStatus MissionPlanner::validate(const Waypoint & start, const Waypoint & goa
 }
 
 
-}  
+}  //end namespace
