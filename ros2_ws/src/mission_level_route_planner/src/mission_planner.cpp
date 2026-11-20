@@ -33,16 +33,7 @@ void MissionPlanner::set_map(shared_ptr<OccupancyGrid> grid)
   grid_ = move(grid);
 }
 
-// kevin's stuff
-bool MissionPlanner::has_map() const
-{
-  return grid_ != nullptr;
-}
-// kevin's stuff
-shared_ptr<OccupancyGrid> MissionPlanner::map() const
-{
-  return grid_;
-}
+
 
 
 //Gets a list of waypoints to push to mavros
