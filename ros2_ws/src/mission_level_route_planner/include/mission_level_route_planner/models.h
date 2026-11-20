@@ -16,24 +16,26 @@ using Index = array<int, 3>;
 enum class PlanStatus
 {
   OK,
+  INVALID_POSE,
   START_BLOCKED,
   GOAL_BLOCKED,
   OUT_OF_BOUNDS,
   NO_PATH,
-  NO_MAP,
+  NO_MAP
 };
 
-// turn PlanStatus into text for log messages
-inline const char * to_string(PlanStatus s)
+inline const char * to_string(PlanStatus status)
 {
-  switch (s) {
+  switch (status) {
     case PlanStatus::OK: return "OK";
+    case PlanStatus::INVALID_POSE: return "INVALID_POSE";
     case PlanStatus::START_BLOCKED: return "START_BLOCKED";
     case PlanStatus::GOAL_BLOCKED: return "GOAL_BLOCKED";
     case PlanStatus::OUT_OF_BOUNDS: return "OUT_OF_BOUNDS";
     case PlanStatus::NO_PATH: return "NO_PATH";
     case PlanStatus::NO_MAP: return "NO_MAP";
   }
+
   return "UNKNOWN";
 }
 
