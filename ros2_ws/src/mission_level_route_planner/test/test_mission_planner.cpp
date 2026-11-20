@@ -21,6 +21,44 @@ shared_ptr<OccupancyGrid> make_grid()
 }
 } 
 //kevin's tests
+TEST(MissionPlannerValidate, NegativeOriginGridAcceptsFreePoses)
+{
+  auto g = make_shared<OccupancyGrid>(10, 10, 10, 1.0, Waypoint{-5.0, -5.0, -5.0});
+  MissionPlanner p;
+  p.set_map(g);
+  EXPECT_EQ(p.validate({-4.5, -4.5, -4.5}, {4.5, 4.5, 4.5}), PlanStatus::OK);
+}
+
+
+TEST(MissionPlannerPath, FindsPathOnOpenGrid)
+{
+  MissionPlanner p;
+  p.set_map(make_grid());
+  const PlanRequest req{{10.25, 20.25, 0.25}, {14.25, 24.25, 0.25}};
+  const auto path = p.getMissionPath(req);
+  ASSERT_FALSE(path.empty());
+  EXPECT_NEAR(path.front().x, 10.25, 1e-6);
+  EXPECT_NEAR(path.front().y, 20.25, 1e-6);
+  EXPECT_NEAR(path.back().x, 14.25, 1e-6);
+  EXPECT_NEAR(path.back().y, 24.25, 1e-6);
+}
+
+TEST(MissionPlannerPath, InvalidRequestGivesEmptyPath)
+{
+  MissionPlanner p;
+  p.set_map(make_grid());
+  const PlanRequest req{{10.25, 20.25, 0.25}, {99, 99, 0.25}};
+  EXPECT_TRUE(p.getMissionPath(req).empty());
+}
+
+TEST(MissionPlannerPath, NoMapThrows)
+{
+  MissionPlanner p;
+  const PlanRequest req{{0, 0, 0}, {1, 1, 0}};
+  EXPECT_THROW(p.getMissionPath(req), invalid_argument);
+}
+
+
 TEST(MissionPlanner, ReportsMissingMap)
 {
   MissionPlanner planner;
