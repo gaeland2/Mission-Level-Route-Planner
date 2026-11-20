@@ -214,7 +214,8 @@ TEST(MissionPlannerValidate, PoseOutsideMapIsOutOfBounds)
   EXPECT_EQ(p.validate(ok, {10.25, 20.25, -1.0}), PlanStatus::OUT_OF_BOUNDS); // below the map
 }
 
-// NaN, infinity and very large values give OUT_OF_BOUNDS
+
+// NaN and infinity give INVALID_POSE; a huge but finite value is simply out of bounds
 TEST(MissionPlannerValidate, NonFinitePoseIsRejectedNotCrashed)
 {
   MissionPlanner p;
@@ -222,8 +223,8 @@ TEST(MissionPlannerValidate, NonFinitePoseIsRejectedNotCrashed)
   const double nan = numeric_limits<double>::quiet_NaN();
   const double inf = numeric_limits<double>::infinity();
   const Waypoint ok{10.25, 20.25, 0.25};
-  EXPECT_EQ(p.validate({nan, 20.25, 0.25}, ok), PlanStatus::OUT_OF_BOUNDS);
-  EXPECT_EQ(p.validate(ok, {10.25, -inf, 0.25}), PlanStatus::OUT_OF_BOUNDS);
+  EXPECT_EQ(p.validate({nan, 20.25, 0.25}, ok), PlanStatus::INVALID_POSE);
+  EXPECT_EQ(p.validate(ok, {10.25, -inf, 0.25}), PlanStatus::INVALID_POSE);
   EXPECT_EQ(p.validate({1e300, 20.25, 0.25}, ok), PlanStatus::OUT_OF_BOUNDS);
 }
 
@@ -316,4 +317,5 @@ TEST(PlanStatusText, ToString)
   EXPECT_STREQ(to_string(PlanStatus::OUT_OF_BOUNDS), "OUT_OF_BOUNDS");
   EXPECT_STREQ(to_string(PlanStatus::START_BLOCKED), "START_BLOCKED");
   EXPECT_STREQ(to_string(PlanStatus::GOAL_BLOCKED), "GOAL_BLOCKED");
+  EXPECT_STREQ(to_string(PlanStatus::INVALID_POSE), "INVALID_POSE");
 }
