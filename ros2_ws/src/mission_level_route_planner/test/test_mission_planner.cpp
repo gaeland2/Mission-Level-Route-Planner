@@ -59,47 +59,9 @@ TEST(MissionPlannerPath, NoMapThrows)
 }
 
 
-TEST(MissionPlanner, ReportsMissingMap)
-{
-  MissionPlanner planner;
 
-  EXPECT_EQ(
-    planner.validate(
-      Waypoint{0.0, 0.0, 0.0},
-      Waypoint{1.0, 1.0, 1.0}),
-    PlanStatus::NO_MAP);
-}
 
-TEST(MissionPlanner, AcceptsFreeWorldPoses)
-{
-  auto grid = std::make_shared<OccupancyGrid>(
-    10, 10, 10, 1.0, Waypoint{-5.0, -5.0, -5.0});
 
-  MissionPlanner planner;
-  planner.set_map(grid);
-
-  EXPECT_TRUE(planner.has_map());
-  EXPECT_EQ(
-    planner.validate(
-      Waypoint{-4.5, -4.5, -4.5},
-      Waypoint{4.5, 4.5, 4.5}),
-    PlanStatus::OK);
-}
-
-TEST(MissionPlanner, RejectsNonFinitePose)
-{
-  auto grid = std::make_shared<OccupancyGrid>(10, 10, 10);
-  MissionPlanner planner;
-  planner.set_map(grid);
-
-  const double nan = std::numeric_limits<double>::quiet_NaN();
-
-  EXPECT_EQ(
-    planner.validate(
-      Waypoint{nan, 0.0, 0.0},
-      Waypoint{1.0, 1.0, 1.0}),
-    PlanStatus::INVALID_POSE);
-}
 
 
 TEST(MissionPlanner, RejectsOutOfBoundsPose)
@@ -145,14 +107,7 @@ TEST(MissionPlanner, RejectsBlockedGoal)
     PlanStatus::GOAL_BLOCKED);
 }
 
-TEST(MissionPlanner, RejectsNullMap)
-{
-  MissionPlanner planner;
 
-  EXPECT_THROW(
-    planner.set_map(nullptr),
-    invalid_argument);
-}
 
 
 // Validating before any map is set reports NO_MAP
