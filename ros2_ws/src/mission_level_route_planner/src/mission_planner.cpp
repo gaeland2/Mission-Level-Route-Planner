@@ -18,10 +18,13 @@ MissionPlanner::MissionPlanner(shared_ptr<OccupancyGrid> grid)
 }
 
 
+namespace
+{
 bool is_finite(const Waypoint & p)
 {
-  return isfinite(p.x) && isfinite(p.y) && isfinite(p.z);
+  return std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z);
 }
+}  // namespace
 
 // Stores map, throws invalid_argument if grid is null
 void MissionPlanner::set_map(shared_ptr<OccupancyGrid> grid)
