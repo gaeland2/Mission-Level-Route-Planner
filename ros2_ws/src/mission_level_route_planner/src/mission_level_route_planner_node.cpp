@@ -148,11 +148,14 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.pose.position;
         //const auto & q = msg->pose.pose.orientation;
 
-        start_pose = {p.x, p.y, p.z};
+        const double z_offset = 1.0;
+        const double z_with_offset = p.z + z_offset;
+        start_pose = {p.x, p.y, z_with_offset};
+        this->set_parameter(rclcpp::Parameter("start_pose", start_pose));
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "initial pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, p.z);
+          p.x, p.y, z_with_offset);
 
         updateGridAndPublishPath();
       }
@@ -163,11 +166,13 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.position; //pos
         //const auto & q = msg->pose.orientation; //orientaiton
 
-        goal_pose = {p.x, p.y, p.z};
+        const double z_offset = 1.0;
+        const double z_with_offset = p.z + z_offset;
+        goal_pose = {p.x, p.y, z_with_offset};
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "goal pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, p.z);
+          p.x, p.y, z_with_offset);
         publishPath();
       }
 
