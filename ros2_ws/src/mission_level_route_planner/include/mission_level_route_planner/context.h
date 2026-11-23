@@ -18,7 +18,7 @@ public:
 
   void set_strategy(shared_ptr<PathfindingStrategy> strategy);
   PlanStatus validate(const Index & start, const Index & goal) const;
-  PlanResult plan(const Index & start, const Index & goal);
+  PlanResult plan(const Index & start, const Index & goal, bool smooth_path = false);
 
 private:
   shared_ptr<OccupancyGrid> grid_;

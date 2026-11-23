@@ -21,6 +21,7 @@ add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
   src/context.cpp
+  src/path_smoother.cpp)
   src/metrics.cpp
   src/mission_planner.cpp)
 
@@ -66,6 +67,12 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_timeout_iteration test/test_timeout_iteration.cpp)
   target_link_libraries(test_timeout_iteration route_planner_core)
+
+  ament_add_gtest(test_path_smoother test/test_path_smoother.cpp)
+  target_link_libraries(test_path_smoother route_planner_core)
+
+  ament_add_gtest(test_path_smoothing_integrationtest/test_path_smoothing_integration.cpp)
+  target_link_libraries(test_path_smoothing_integration route_planner_core)
 endif()
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
