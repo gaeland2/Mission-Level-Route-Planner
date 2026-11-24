@@ -41,7 +41,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
       this->declare_parameter<std::vector<double>>
       ("start_pose", std::vector<double>{0.0, 0.0, 0.0});
       start_pose= this->get_parameter("start_pose").as_double_array();
-      //
+      this->declare_parameter<double>("safety_margin", 0.0);
+      this->declare_parameter<double>("extra_margin", 0.0);
 
       //Declare rviz listener
       _initialPoseSubscription = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -148,14 +149,17 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.pose.position;
         //const auto & q = msg->pose.pose.orientation;
 
-        const double z_offset = 1.0;
-        const double z_with_offset = p.z + z_offset;
-        start_pose = {p.x, p.y, z_with_offset};
+        const double safety_margin = this->get_parameter("safety_margin").as_double();
+        const double extra_margin = this->get_parameter("extra_margin").as_double();
+        const double offset_above_ground = safety_margin + extra_margin;
+        const double raised_z = p.z + offset_above_ground; // Raise z to prevent the safety margin from overlapping with the ground
+
+        start_pose = {p.x, p.y, raised_z};
         this->set_parameter(rclcpp::Parameter("start_pose", start_pose));
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "initial pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, z_with_offset);
+          p.x, p.y, raised_z);
 
         updateGridAndPublishPath();
       }
@@ -166,13 +170,16 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.position; //pos
         //const auto & q = msg->pose.orientation; //orientaiton
 
-        const double z_offset = 1.0;
-        const double z_with_offset = p.z + z_offset;
-        goal_pose = {p.x, p.y, z_with_offset};
+        const double safety_margin = this->get_parameter("safety_margin").as_double();
+        const double extra_margin = this->get_parameter("extra_margin").as_double();
+        const double offset_above_ground = safety_margin + extra_margin;
+        const double raised_z = p.z + offset_above_ground; // Raise z to prevent the safety margin from overlapping with the ground
+
+        goal_pose = {p.x, p.y, raised_z};
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "goal pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, z_with_offset);
+          p.x, p.y, raised_z);
         publishPath();
       }
 
@@ -216,6 +223,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       }
 
       grid = getOccupancyGrid(_octree);
+      grid->set_safety_margin(this->get_parameter("safety_margin").as_double());
       RCLCPP_INFO(get_logger(), "OccupancyGrid built from OctoMap.");
       publishPath();
     }
