@@ -267,6 +267,9 @@ class MissionRoutePlannerNode : public rclcpp::Node
       }
 
       _pathPublisher->publish(path);
+      RCLCPP_INFO(
+        get_logger(), "Path successfully generated with %zu poses published.",
+        path.poses.size());
     }
   };
 
