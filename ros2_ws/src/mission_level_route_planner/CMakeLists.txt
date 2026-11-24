@@ -21,7 +21,7 @@ add_library(route_planner_core
   src/grid.cpp
   src/dijkstra.cpp
   src/context.cpp
-  src/path_smoother.cpp)
+  src/path_smoother.cpp
   src/metrics.cpp
   src/mission_planner.cpp)
 
