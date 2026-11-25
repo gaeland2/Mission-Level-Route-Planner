@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <memory>
 
 #include "mission_level_route_planner/grid.h"
@@ -36,9 +37,22 @@ public:
 // Check both start & goal poses against the map and return a corresponding PlanStatus
   vector<Waypoint> getMissionPath(const PlanRequest & request) const;
 
+  // Same search, but returns the full PlanResult so the caller can see WHY it failed
+  // (TIMEOUT, MAX_ITERATIONS_REACHED, NO_PATH, ...). Path is in grid indices.
+  PlanResult plan(const PlanRequest & request) const;
+
+  // Search guards passed to Dijkstra. Defaults are generous for a 100 m map.
+  void set_search_limits(int max_iterations, double timeout_seconds)
+  {
+    max_iterations_ = max_iterations;
+    timeout_seconds_ = timeout_seconds;
+  }
+
 private:
   // The accepted map (null until set_map() is called)
   shared_ptr<OccupancyGrid> grid_;
+  int max_iterations_{numeric_limits<int>::max()};
+  double timeout_seconds_{120.0};
 };
 
 } // namespace mission_level_route_planner

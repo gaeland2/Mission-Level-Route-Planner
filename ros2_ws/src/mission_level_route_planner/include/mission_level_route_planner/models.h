@@ -35,6 +35,8 @@ inline const char * to_string(PlanStatus status)
     case PlanStatus::GOAL_BLOCKED: return "GOAL_BLOCKED";
     case PlanStatus::OUT_OF_BOUNDS: return "OUT_OF_BOUNDS";
     case PlanStatus::NO_PATH: return "NO_PATH";
+    case PlanStatus::TIMEOUT: return "TIMEOUT";
+    case PlanStatus::MAX_ITERATIONS_REACHED: return "MAX_ITERATIONS_REACHED";
     case PlanStatus::NO_MAP: return "NO_MAP";
   }
 

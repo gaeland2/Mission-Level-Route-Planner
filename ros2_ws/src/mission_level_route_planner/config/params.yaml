@@ -2,3 +2,5 @@ Mission_Route_Planner:
   ros__parameters:
     safety_margin: 1.0
     extra_margin: 0.5
+    max_iterations: 2147483647
+    planning_timeout_s: 120.0
