@@ -15,6 +15,9 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <nav_msgs/msg/path.hpp>
+
+#include "mission_level_route_planner/mission_planner.h"
 
 
 using namespace std::chrono_literals;
@@ -38,7 +41,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
       this->declare_parameter<std::vector<double>>
       ("start_pose", std::vector<double>{0.0, 0.0, 0.0});
       start_pose= this->get_parameter("start_pose").as_double_array();
-      //
+      this->declare_parameter<double>("safety_margin", 0.0);
+      this->declare_parameter<double>("extra_margin", 0.0);
 
       //Declare rviz listener
       _initialPoseSubscription = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -49,6 +53,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       "/goal_pose", 10,
       std::bind(&MissionRoutePlannerNode::goalPoseCallback, this, std::placeholders::_1));
 
+      _pathPublisher = create_publisher<nav_msgs::msg::Path>("/planned_path", 10);
 
       
 
@@ -75,7 +80,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
     }
 
 
-    std::shared_ptr<OccupancyGrid> getOccupancyGrid(Waypoint origin, std::shared_ptr<octomap::OcTree> _octree)
+    std::shared_ptr<OccupancyGrid> getOccupancyGrid(std::shared_ptr<octomap::OcTree> _octree)
     {
       shared_ptr<octomap::OcTree> tree = _octree;
       
@@ -88,7 +93,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
       const int ny = static_cast<int>(std::ceil((max_y - min_y) / res));
       const int nz = static_cast<int>(std::ceil((max_z - min_z) / res));
 
-      auto grid = std::make_shared<OccupancyGrid>(nx, ny, nz, res, origin);
+      auto grid = std::make_shared<OccupancyGrid>(
+        nx, ny, nz, res, Waypoint{min_x, min_y, min_z});
 
       //being filling occupancy grid
       for(auto it = tree->begin_leafs(), end = tree->end_leafs(); it !=end; ++it)
@@ -120,6 +126,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
 
       rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr _initialPoseSubscription;
       rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr _goalPoseSubscription;
+      rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr _pathPublisher;
 
       /// Paramater variables, i.e goal_pose, start pose
       std::vector<double> start_pose; 
@@ -129,6 +136,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       //Octree variables
       std::shared_ptr<octomap::OcTree> _octree;
       std::mutex _octreeMutex;
+      std::string map_frame_id_;
 
       //OccupancyGrid, PathResult, etc
       std::shared_ptr<OccupancyGrid> grid;
@@ -141,23 +149,19 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.pose.position;
         //const auto & q = msg->pose.pose.orientation;
 
-        start_pose = {p.x, p.y, p.z};
+        const double safety_margin = this->get_parameter("safety_margin").as_double();
+        const double extra_margin = this->get_parameter("extra_margin").as_double();
+        const double offset_above_ground = safety_margin + extra_margin;
+        const double raised_z = p.z + offset_above_ground; // Raise z to prevent the safety margin from overlapping with the ground
+
+        start_pose = {p.x, p.y, raised_z};
+        this->set_parameter(rclcpp::Parameter("start_pose", start_pose));
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "initial pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, p.z);
+          p.x, p.y, raised_z);
 
-        //rebuilds the occupancy grid
-        grid = this->getOccupancyGrid(Waypoint{start_pose[0], start_pose[1], start_pose[2]}, _octree);
-
-        if(!grid)
-        {
-           RCLCPP_WARN(get_logger(), "grid is not built after initialising start_pose");
-        }
-        else
-        {
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "OccupancyGrid is built, pointed by grid variable with initial pose.");
-        }
+        updateGridAndPublishPath();
       }
 
     void goalPoseCallback(
@@ -166,11 +170,17 @@ class MissionRoutePlannerNode : public rclcpp::Node
         const auto & p = msg->pose.position; //pos
         //const auto & q = msg->pose.orientation; //orientaiton
 
-        goal_pose = {p.x, p.y, p.z};
+        const double safety_margin = this->get_parameter("safety_margin").as_double();
+        const double extra_margin = this->get_parameter("extra_margin").as_double();
+        const double offset_above_ground = safety_margin + extra_margin;
+        const double raised_z = p.z + offset_above_ground; // Raise z to prevent the safety margin from overlapping with the ground
+
+        goal_pose = {p.x, p.y, raised_z};
         RCLCPP_INFO(
           rclcpp::get_logger("rclcpp"),
           "goal pose (subscribed from rviz): %.2f %.2f %.2f set",
-          p.x, p.y, p.z);
+          p.x, p.y, raised_z);
+        publishPath();
       }
 
     void octomapCallback(
@@ -197,19 +207,69 @@ class MissionRoutePlannerNode : public rclcpp::Node
         //avoids race conditions
         std::lock_guard<std::mutex> lock(_octreeMutex);
         _octree.reset(tree);   // takes ownership, frees the previous tree
+        map_frame_id_ = msg->header.frame_id;
 
-        //BUILDS GRID HERE.
-        grid = this->getOccupancyGrid(Waypoint{start_pose[0], start_pose[1], start_pose[2]}, _octree);
-        if(!grid)
-        {
-           RCLCPP_WARN(get_logger(), "grid is not built");
+        updateGridAndPublishPath();
+    }
+
+    void updateGridAndPublishPath()
+    {
+      if (!_octree) {
+        return;
+      }
+      if (start_pose.size() != 3) {
+        RCLCPP_WARN(get_logger(), "Cannot build occupancy grid: start_pose must contain x, y, z");
+        return;
+      }
+
+      grid = getOccupancyGrid(_octree);
+      grid->set_safety_margin(this->get_parameter("safety_margin").as_double());
+      RCLCPP_INFO(get_logger(), "OccupancyGrid built from OctoMap.");
+      publishPath();
+    }
+
+    void publishPath()
+    {
+      if (!grid || start_pose.size() != 3 || goal_pose.size() != 3) {
+        return;
+      }
+
+      const PlanRequest request{
+        Waypoint{start_pose[0], start_pose[1], start_pose[2]},
+        Waypoint{goal_pose[0], goal_pose[1], goal_pose[2]}};
+      MissionPlanner planner(grid);
+      const PlanStatus status = planner.validate(request);
+
+      nav_msgs::msg::Path path;
+      path.header.stamp = now();
+      path.header.frame_id = map_frame_id_;
+
+      if (status == PlanStatus::OK) {
+        const auto waypoints = planner.getMissionPath(request);
+        if (waypoints.empty()) {
+          RCLCPP_WARN(get_logger(), "No path found between start and goal.");
+        } else {
+          path.poses.reserve(waypoints.size());
+          for (const auto & waypoint : waypoints) {
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header = path.header;
+            pose.pose.position.x = waypoint.x;
+            pose.pose.position.y = waypoint.y;
+            pose.pose.position.z = waypoint.z;
+            pose.pose.orientation.w = 1.0;
+            path.poses.push_back(std::move(pose));
+          }
         }
-        else
-        {
-          RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "OccupancyGrid is built, pointed by grid variable.");
-        }
+      } else {
+        RCLCPP_WARN(
+          get_logger(), "Cannot publish route: planner status is %s",
+          mission_level_route_planner::to_string(status));
+      }
 
-
+      _pathPublisher->publish(path);
+      RCLCPP_INFO(
+        get_logger(), "Path successfully generated with %zu poses published.",
+        path.poses.size());
     }
   };
 

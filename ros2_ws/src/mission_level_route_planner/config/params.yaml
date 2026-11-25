@@ -1,3 +1,4 @@
 Mission_Route_Planner:
   ros__parameters:
-    start_pose: [5.0,2.0,3.0] #x, y, z 
+    safety_margin: 1.0
+    extra_margin: 0.5
