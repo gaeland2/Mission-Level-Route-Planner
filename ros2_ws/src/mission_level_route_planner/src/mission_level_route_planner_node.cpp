@@ -247,7 +247,7 @@ class MissionRoutePlannerNode : public rclcpp::Node
       if (status == PlanStatus::OK) {
         const auto waypoints = planner.getMissionPath(request);
         if (waypoints.empty()) {
-          RCLCPP_WARN(get_logger(), "No path found between start and goal.");
+          RCLCPP_WARN(get_logger(), "No path could be found. 0 poses published.");
         } else {
           path.poses.reserve(waypoints.size());
           for (const auto & waypoint : waypoints) {
@@ -267,9 +267,11 @@ class MissionRoutePlannerNode : public rclcpp::Node
       }
 
       _pathPublisher->publish(path);
-      RCLCPP_INFO(
-        get_logger(), "Path successfully generated with %zu poses published.",
-        path.poses.size());
+      if (!path.poses.empty()) {
+        RCLCPP_INFO(
+          get_logger(), "Path successfully generated with %zu poses published.",
+          path.poses.size());
+      }
     }
   };
 
