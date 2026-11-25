@@ -71,7 +71,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_path_smoother test/test_path_smoother.cpp)
   target_link_libraries(test_path_smoother route_planner_core)
 
-  ament_add_gtest(test_path_smoothing_integrationtest/test_path_smoothing_integration.cpp)
+  ament_add_gtest(test_path_smoothing_integration test/test_path_smoothing_integration.cpp)
   target_link_libraries(test_path_smoothing_integration route_planner_core)
 endif()
 
