@@ -43,6 +43,9 @@ class MissionRoutePlannerNode : public rclcpp::Node
       start_pose= this->get_parameter("start_pose").as_double_array();
       this->declare_parameter<double>("safety_margin", 0.0);
       this->declare_parameter<double>("extra_margin", 0.0);
+      // Search guards for Dijkstra (see MissionPlanner::set_search_limits)
+      this->declare_parameter<int>("max_iterations", 2147483647);
+      this->declare_parameter<double>("planning_timeout_s", 120.0);
 
       //Declare rviz listener
       _initialPoseSubscription = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -161,7 +164,8 @@ class MissionRoutePlannerNode : public rclcpp::Node
           "initial pose (subscribed from rviz): %.2f %.2f %.2f set",
           p.x, p.y, raised_z);
 
-        updateGridAndPublishPath();
+        // The grid only depends on the octomap, so don't rebuild it here.
+        publishPath();
       }
 
     void goalPoseCallback(
@@ -238,6 +242,9 @@ class MissionRoutePlannerNode : public rclcpp::Node
         Waypoint{start_pose[0], start_pose[1], start_pose[2]},
         Waypoint{goal_pose[0], goal_pose[1], goal_pose[2]}};
       MissionPlanner planner(grid);
+      planner.set_search_limits(
+        static_cast<int>(this->get_parameter("max_iterations").as_int()),
+        this->get_parameter("planning_timeout_s").as_double());
       const PlanStatus status = planner.validate(request);
 
       nav_msgs::msg::Path path;
@@ -245,12 +252,19 @@ class MissionRoutePlannerNode : public rclcpp::Node
       path.header.frame_id = map_frame_id_;
 
       if (status == PlanStatus::OK) {
-        const auto waypoints = planner.getMissionPath(request);
-        if (waypoints.empty()) {
-          RCLCPP_WARN(get_logger(), "No path could be found. 0 poses published.");
+        const PlanResult result = planner.plan(request);
+        RCLCPP_INFO(
+          get_logger(), "Plan %s: %d nodes expanded in %.2f s",
+          mission_level_route_planner::to_string(result.status),
+          result.nodes_expanded, result.compute_time_s);
+        if (!result.success() || result.path.empty()) {
+          RCLCPP_WARN(
+            get_logger(), "No path published (status %s).",
+            mission_level_route_planner::to_string(result.status));
         } else {
-          path.poses.reserve(waypoints.size());
-          for (const auto & waypoint : waypoints) {
+          path.poses.reserve(result.path.size());
+          for (const Index & index : result.path) {
+            const Waypoint waypoint = grid->to_world(index);
             geometry_msgs::msg::PoseStamped pose;
             pose.header = path.header;
             pose.pose.position.x = waypoint.x;
